@@ -1,0 +1,204 @@
+generator client {
+provider = "prisma-client-js"
+}
+
+datasource db {
+provider = "mysql"
+url = env("DATABASE_URL")
+}
+
+model UserProfile {
+userProfileId Int @id @default(autoincrement())
+firstName String @db.VarChar(50)
+lastName String @db.VarChar(50)
+emailAddress String @unique @db.VarChar(100)
+description String? @db.Text
+hashedPassword String @db.VarChar(255)
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+userRole UserRole @default(user)
+eventEnrollments EventEnrollment[]
+eventSubmissions SubmissionRecord[]
+userExpertise UserExpertise[]
+
+feedbackGiven Feedback[] @relation("EvaluatorFeedback")
+mentorshipAsMentor MentorshipProgram[] @relation("Mentor")
+mentorshipAsMentee MentorshipProgram[] @relation("Mentee")
+messages_messages_from_userTousers messages[]        @relation("messages_from_userTousers")
+messages_messages_to_userTousers   messages[]        @relation("messages_to_userTousers")
+}
+
+model EventDetail {
+eventDetailId Int @id @default(autoincrement())
+eventName String @db.VarChar(100)
+image String? @db.Text
+eventTicketPrice String
+eventDescription String? @db.Text
+startDate DateTime @db.DateTime
+endDate DateTime @db.DateTime
+eventLocation String? @db.VarChar(255)
+meetingLink String? @db.VarChar(255)
+recordingLink String? @db.VarChar(255)
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+
+eventEnrollments EventEnrollment[]
+eventSubmissions SubmissionRecord[]
+eventSchedules EventSchedule[]
+}
+
+model EventEnrollment {
+eventEnrollmentId Int @id @default(autoincrement())
+userProfileId Int
+eventDetailId Int
+registrationDate DateTime
+ticketType TicketType
+paymentStatus PaymentStatus @default(pending)
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+
+userProfile UserProfile @relation(fields: [userProfileId], references: [userProfileId])
+eventDetail EventDetail @relation(fields: [eventDetailId], references: [eventDetailId],onDelete: Cascade)
+}
+
+model SubmissionRecord {
+submissionRecordId Int @id @default(autoincrement())
+eventDetailId Int
+userProfileId Int
+submissionTitle String @db.VarChar(255)
+submissionAbstract String? @db.Text
+submissionDate DateTime @default(now())
+submissionStatus SubmissionStatus @default(submitted)
+submissionExpertise SubmissionExpertise[]
+
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+
+eventDetail EventDetail @relation(fields: [eventDetailId], references: [eventDetailId],onDelete: Cascade)
+userProfile UserProfile @relation(fields: [userProfileId], references: [userProfileId])
+submissionFeedbacks Feedback[]
+}
+
+model Feedback {
+feedbackId Int @id @default(autoincrement())
+submissionRecordId Int
+evaluatorId Int
+feedbackComments String?
+feedbackRating Int
+reviewDate DateTime? @default(now())
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+
+submissionRecord SubmissionRecord @relation(fields: [submissionRecordId], references: [submissionRecordId],onDelete: Cascade)
+evaluator UserProfile @relation("EvaluatorFeedback", fields: [evaluatorId], references: [userProfileId])
+}
+
+model EventSchedule {
+eventScheduleId Int @id @default(autoincrement())
+eventDetailId Int
+scheduledTime DateTime
+scheduleLocation String? @db.VarChar(255)
+speakerName String @db.VarChar(255)
+speakerDesc String?
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+
+eventDetail EventDetail @relation(fields: [eventDetailId], references: [eventDetailId],onDelete: Cascade)
+}
+
+model MentorshipProgram {
+mentorshipProgramId Int @id @default(autoincrement())
+mentorProfileId Int
+menteeProfileId Int
+startDate DateTime
+endDate DateTime?
+mentorshipStatus MentorshipStatus @default(active)
+createdAt DateTime? @default(now())
+updatedAt DateTime? @updatedAt
+
+mentorProfile UserProfile @relation("Mentor", fields: [mentorProfileId], references: [userProfileId])
+menteeProfile UserProfile @relation("Mentee", fields: [menteeProfileId], references: [userProfileId])
+}
+
+model Message {
+messageId BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+senderId BigInt @db.UnsignedBigInt
+recipientId BigInt @db.UnsignedBigInt
+messageContent String @db.Text
+sentAt DateTime? @db.Timestamp(0)
+updatedAt DateTime? @db.Timestamp(0)
+}
+model Expertise {
+expertiseId Int @id @default(autoincrement())
+expertiseName String @unique @db.VarChar(100)
+users UserExpertise[] // Junction table for UserProfile
+submissions SubmissionExpertise[] // Junction table for SubmissionRecord
+}
+
+model UserExpertise {
+userExpertiseId Int @id @default(autoincrement())
+userProfileId Int
+expertiseId Int
+
+userProfile UserProfile @relation(fields: [userProfileId], references: [userProfileId])
+expertise Expertise @relation(fields: [expertiseId], references: [expertiseId])
+
+@@unique([userProfileId, expertiseId]) // Avoid duplicate mappings
+}
+model SubmissionExpertise {
+submissionExpertiseId Int @id @default(autoincrement())
+submissionRecordId Int
+expertiseId Int
+
+submissionRecord SubmissionRecord @relation(fields: [submissionRecordId], references: [submissionRecordId])
+expertise Expertise @relation(fields: [expertiseId], references: [expertiseId])
+
+@@unique([submissionRecordId, expertiseId]) // Avoid duplicate mappings
+}
+
+enum UserRole {
+user
+admin
+mentor
+}
+
+enum TicketType {
+regular
+student
+vip
+}
+
+enum PaymentStatus {
+pending
+completed
+failed
+}
+
+enum SubmissionStatus {
+submitted
+under_review
+accepted
+rejected
+}
+
+enum MentorshipStatus {
+active
+completed
+cancelled
+}
+
+
+
+model messages {
+  id                              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  from_user                       Int    
+  to_user                         Int    
+  content                         String    @db.Text
+  created_at                      DateTime? @db.Timestamp(0)
+  updated_at                      DateTime? @db.Timestamp(0)
+  users_messages_from_userTousers UserProfile     @relation("messages_from_userTousers", fields: [from_user], references: [userProfileId], onDelete: Cascade, onUpdate: NoAction, map: "messages_from_user_foreign")
+  users_messages_to_userTousers   UserProfile     @relation("messages_to_userTousers", fields: [to_user], references: [userProfileId], onDelete: Cascade, onUpdate: NoAction, map: "messages_to_user_foreign")
+
+  @@index([from_user], map: "messages_from_user_foreign")
+  @@index([to_user], map: "messages_to_user_foreign")
+}
