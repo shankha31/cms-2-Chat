@@ -120,14 +120,6 @@ mentorProfile UserProfile @relation("Mentor", fields: [mentorProfileId], referen
 menteeProfile UserProfile @relation("Mentee", fields: [menteeProfileId], references: [userProfileId])
 }
 
-model Message {
-messageId BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-senderId BigInt @db.UnsignedBigInt
-recipientId BigInt @db.UnsignedBigInt
-messageContent String @db.Text
-sentAt DateTime? @db.Timestamp(0)
-updatedAt DateTime? @db.Timestamp(0)
-}
 model Expertise {
 expertiseId Int @id @default(autoincrement())
 expertiseName String @unique @db.VarChar(100)
@@ -145,6 +137,7 @@ expertise Expertise @relation(fields: [expertiseId], references: [expertiseId])
 
 @@unique([userProfileId, expertiseId]) // Avoid duplicate mappings
 }
+
 model SubmissionExpertise {
 submissionExpertiseId Int @id @default(autoincrement())
 submissionRecordId Int
@@ -153,7 +146,7 @@ expertiseId Int
 submissionRecord SubmissionRecord @relation(fields: [submissionRecordId], references: [submissionRecordId])
 expertise Expertise @relation(fields: [expertiseId], references: [expertiseId])
 
-@@unique([submissionRecordId, expertiseId]) // Avoid duplicate mappings
+@@unique([submissionRecordId, expertiseId])
 }
 
 enum UserRole {
@@ -186,8 +179,6 @@ active
 completed
 cancelled
 }
-
-
 
 model messages {
   id                              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt

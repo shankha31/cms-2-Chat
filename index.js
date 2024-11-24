@@ -12,9 +12,14 @@ const io = new Server(server, { cors: { origin: '*' } })
 
 io.on('connection', (socket) => {
 	socket.on('chat_message', async (payload) => {
+		const data = {
+			from_user : payload.author,
+			to_user : payload.to,
+			content : payload.content,
+		}
 		await prisma.messages
 			.create({
-				data: payload,
+				data: data,
 			})
 			.then(() => io.emit('chat_message', payload))
 	})
