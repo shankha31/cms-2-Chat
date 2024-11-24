@@ -120,6 +120,20 @@ mentorProfile UserProfile @relation("Mentor", fields: [mentorProfileId], referen
 menteeProfile UserProfile @relation("Mentee", fields: [menteeProfileId], references: [userProfileId])
 }
 
+model messages {
+  id                              Int    @id @default(autoincrement()) 
+  from_user                       Int    
+  to_user                         Int    
+  content                         String    @db.Text
+  created_at                      DateTime? @default(now())
+  updated_at                      DateTime? @db.Timestamp(0)
+  users_messages_from_userTousers UserProfile     @relation("messages_from_userTousers", fields: [from_user], references: [userProfileId], onDelete: Cascade, onUpdate: NoAction, map: "messages_from_user_foreign")
+  users_messages_to_userTousers   UserProfile     @relation("messages_to_userTousers", fields: [to_user], references: [userProfileId], onDelete: Cascade, onUpdate: NoAction, map: "messages_to_user_foreign")
+
+  @@index([from_user], map: "messages_from_user_foreign")
+  @@index([to_user], map: "messages_to_user_foreign")
+}
+
 model Expertise {
 expertiseId Int @id @default(autoincrement())
 expertiseName String @unique @db.VarChar(100)
@@ -137,7 +151,6 @@ expertise Expertise @relation(fields: [expertiseId], references: [expertiseId])
 
 @@unique([userProfileId, expertiseId]) // Avoid duplicate mappings
 }
-
 model SubmissionExpertise {
 submissionExpertiseId Int @id @default(autoincrement())
 submissionRecordId Int
@@ -146,7 +159,7 @@ expertiseId Int
 submissionRecord SubmissionRecord @relation(fields: [submissionRecordId], references: [submissionRecordId])
 expertise Expertise @relation(fields: [expertiseId], references: [expertiseId])
 
-@@unique([submissionRecordId, expertiseId])
+@@unique([submissionRecordId, expertiseId]) // Avoid duplicate mappings
 }
 
 enum UserRole {
@@ -178,18 +191,4 @@ enum MentorshipStatus {
 active
 completed
 cancelled
-}
-
-model messages {
-  id                              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  from_user                       Int    
-  to_user                         Int    
-  content                         String    @db.Text
-  created_at                      DateTime? @db.Timestamp(0)
-  updated_at                      DateTime? @db.Timestamp(0)
-  users_messages_from_userTousers UserProfile     @relation("messages_from_userTousers", fields: [from_user], references: [userProfileId], onDelete: Cascade, onUpdate: NoAction, map: "messages_from_user_foreign")
-  users_messages_to_userTousers   UserProfile     @relation("messages_to_userTousers", fields: [to_user], references: [userProfileId], onDelete: Cascade, onUpdate: NoAction, map: "messages_to_user_foreign")
-
-  @@index([from_user], map: "messages_from_user_foreign")
-  @@index([to_user], map: "messages_to_user_foreign")
 }
